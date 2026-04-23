@@ -51,6 +51,7 @@ async def _embed_one(
 
 
 @app.post("/v1/embeddings")
+@app.post("/embeddings")
 async def create_embeddings(body: EmbeddingRequest, request: Request):
     # Allow API key to be passed via Authorization header (LiteLLM sends it as Bearer)
     auth = request.headers.get("Authorization", "")
