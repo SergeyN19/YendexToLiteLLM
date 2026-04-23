@@ -1,4 +1,24 @@
 services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: postgres-vector
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      # POSTGRES_DB is not set here; init-db.sql creates the required databases
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
   yandex-embedding-wrapper:
     build: .
     container_name: yandex-embedding-wrapper
@@ -18,15 +38,47 @@ services:
   litellm:
     image: ghcr.io/berriai/litellm:v1.83.7-stable
     container_name: litellm-proxy
-    restart: unless-stopped
+    restart: always
     depends_on:
+      db:
+        condition: service_healthy
       yandex-embedding-wrapper:
         condition: service_healthy
     environment:
       YANDEX_API_KEY: ${YANDEX_API_KEY}
       LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY}
+      DATABASE_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/litellm_db"
     volumes:
       - ./litellm_config.yaml:/app/config.yaml:ro
     command: ["--config", "/app/config.yaml", "--port", "4000", "--detailed_debug"]
     ports:
       - "4000:4000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:4000/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  litellm-pgvector:
+    image: litellm-pgvector:local
+    container_name: litellm-vector-service
+    command: >
+      sh -c "python3 -m prisma db push && uvicorn main:app --host 0.0.0.0 --port 8000"
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/vector_db"
+      SERVER_API_KEY: ${LITELLM_MASTER_KEY}
+      EMBEDDING__MODEL: text-embedding-yandex
+      EMBEDDING__API_KEY: ${LITELLM_MASTER_KEY}
+      EMBEDDING__BASE_URL: http://litellm:4000
+      EMBEDDING__DIMENSIONS: 1536
+    depends_on:
+      db:
+        condition: service_healthy
+      litellm:
+        condition: service_healthy
+
+volumes:
+  pgdata:
