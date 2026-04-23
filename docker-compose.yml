@@ -16,7 +16,7 @@ services:
       start_period: 10s
 
   litellm:
-    image: ghcr.io/berriai/litellm:main-latest
+    image: ghcr.io/berriai/litellm:v1.83.7-stable
     container_name: litellm-proxy
     restart: unless-stopped
     depends_on:
