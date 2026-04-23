@@ -1,5 +1,7 @@
 import asyncio
+import base64
 import os
+import struct
 from typing import List, Optional, Union
 
 import httpx
@@ -20,6 +22,12 @@ class EmbeddingRequest(BaseModel):
     encoding_format: Optional[str] = "float"
     dimensions: Optional[int] = None
     user: Optional[str] = None
+
+
+def _floats_to_base64(floats: List[float]) -> str:
+    """Pack floats as little-endian float32 and return base64 string (OpenAI format)."""
+    packed = struct.pack(f"<{len(floats)}f", *floats)
+    return base64.b64encode(packed).decode("utf-8")
 
 
 async def _embed_one(
@@ -78,11 +86,14 @@ async def create_embeddings(body: EmbeddingRequest, request: Request):
 
     data = []
     total_tokens = 0
+    use_base64 = body.encoding_format == "base64"
     for i, result in enumerate(results):
+        raw: List[float] = result["embedding"]
+        embedding_value = _floats_to_base64(raw) if use_base64 else raw
         data.append(
             {
                 "object": "embedding",
-                "embedding": result["embedding"],
+                "embedding": embedding_value,
                 "index": i,
             }
         )
