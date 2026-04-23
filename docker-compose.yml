@@ -1,0 +1,32 @@
+services:
+  yandex-embedding-wrapper:
+    build: .
+    container_name: yandex-embedding-wrapper
+    restart: unless-stopped
+    environment:
+      YANDEX_API_KEY: ${YANDEX_API_KEY}
+      YANDEX_FOLDER_ID: ${YANDEX_FOLDER_ID}
+    ports:
+      - "8001:8000"   # exposed for direct testing; not required when used only by LiteLLM
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  litellm:
+    image: ghcr.io/berriai/litellm:main-latest
+    container_name: litellm-proxy
+    restart: unless-stopped
+    depends_on:
+      yandex-embedding-wrapper:
+        condition: service_healthy
+    environment:
+      YANDEX_API_KEY: ${YANDEX_API_KEY}
+      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY}
+    volumes:
+      - ./litellm_config.yaml:/app/config.yaml:ro
+    command: ["--config", "/app/config.yaml", "--port", "4000", "--detailed_debug"]
+    ports:
+      - "4000:4000"
