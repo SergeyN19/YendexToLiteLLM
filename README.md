@@ -34,7 +34,7 @@ docker compose up --build -d
 
 Services:
 - **LiteLLM proxy** — `http://localhost:4000`
-- **Yandex embedding wrapper** — `http://localhost:8001` (direct access, optional)
+- **Yandex embedding wrapper** — `http://localhost:7000` (direct access, optional)
 
 ### 3. Call the embedding API
 
