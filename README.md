@@ -5,7 +5,7 @@ OpenAI-compatible wrapper for [Yandex Embeddings API](https://yandex.cloud/en/do
 ## Architecture
 
 ```
-Client  →  LiteLLM proxy (:4000)  →  Yandex-embedding-wrapper (:8000)  →  Yandex Cloud API
+Client  →  LiteLLM proxy (:4000)  →  Yandex-embedding-wrapper (:7000)  →  Yandex Cloud API
 ```
 
 The wrapper exposes a minimal OpenAI `/v1/embeddings` endpoint.  
@@ -74,7 +74,7 @@ Edit `litellm_config.yaml` and add a new entry under `model_list`:
 - model_name: my-custom-alias
   litellm_params:
     model: openai/text-search-doc/latest   # model name forwarded to wrapper
-    api_base: http://yandex-embedding-wrapper:8000
+    api_base: http://yandex-embedding-wrapper:7000
     api_key: os.environ/YANDEX_API_KEY
 ```
 

@@ -7,9 +7,9 @@ services:
       YANDEX_API_KEY: ${YANDEX_API_KEY}
       YANDEX_FOLDER_ID: ${YANDEX_FOLDER_ID}
     ports:
-      - "8001:8000"   # exposed for direct testing; not required when used only by LiteLLM
+      - "7000:7000"   # exposed for direct testing; not required when used only by LiteLLM
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:7000/health')"]
       interval: 15s
       timeout: 5s
       retries: 5
