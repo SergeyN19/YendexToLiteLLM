@@ -1,0 +1,17 @@
+model_list:
+  - model_name: text-embedding-yandex
+    litellm_params:
+      # LiteLLM treats the "openai/" prefix as a pass-through to any OpenAI-compatible endpoint.
+      # The model name after the slash is forwarded in the request body as-is.
+      model: openai/text-search-doc/latest
+      api_base: http://yandex-embedding-wrapper:7000
+      api_key: os.environ/YANDEX_API_KEY
+
+  - model_name: text-embedding-yandex-query
+    litellm_params:
+      model: openai/text-search-query/latest
+      api_base: http://yandex-embedding-wrapper:7000
+      api_key: os.environ/YANDEX_API_KEY
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
